@@ -183,6 +183,8 @@ export function PosterStudio() {
   const [showExport, setShowExport] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [historyVersion, setHistoryVersion] = useState(0);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const [notice, setNotice] = useState("拖入海报开始检查");
   const [busy, setBusy] = useState(false);
 
@@ -206,6 +208,8 @@ export function PosterStudio() {
 
   const setCanvasPixels = useCallback((pixels: ImageData) => {
     canvasRef.current?.getContext("2d", { willReadFrequently: true })?.putImageData(pixels, 0, 0);
+    setCanUndo(undoRef.current.length > 0);
+    setCanRedo(redoRef.current.length > 0);
     setHistoryVersion((value) => value + 1);
   }, []);
 
@@ -216,6 +220,8 @@ export function PosterStudio() {
     undoRef.current.push({ pixels: context.getImageData(0, 0, canvas.width, canvas.height) });
     if (undoRef.current.length > 8) undoRef.current.shift();
     redoRef.current = [];
+    setCanUndo(true);
+    setCanRedo(false);
     setHistoryVersion((value) => value + 1);
   }, []);
 
@@ -290,6 +296,8 @@ export function PosterStudio() {
       originalRef.current = context.getImageData(0, 0, canvas.width, canvas.height);
       undoRef.current = [];
       redoRef.current = [];
+      setCanUndo(false);
+      setCanRedo(false);
       setImage({ name: file.name, width: source.naturalWidth, height: source.naturalHeight, size: file.size });
       setSelection(null);
       setOcrBoxes([]);
@@ -520,8 +528,8 @@ export function PosterStudio() {
         <div className="brand-mark" aria-hidden="true">印</div>
         <div className="brand-copy"><strong>印准</strong><span>海报印前修复台</span></div>
         <div className="history-controls">
-          <button type="button" onClick={undo} disabled={!undoRef.current.length} title="撤销">↶</button>
-          <button type="button" onClick={redo} disabled={!redoRef.current.length} title="重做">↷</button>
+          <button type="button" onClick={undo} disabled={!canUndo} title="撤销">↶</button>
+          <button type="button" onClick={redo} disabled={!canRedo} title="重做">↷</button>
         </div>
         <div className="privacy-note"><i /> 图片仅在当前浏览器处理</div>
         <button className="ghost-button" type="button" onClick={() => setShowHelp(true)}>使用说明</button>
